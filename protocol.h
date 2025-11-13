@@ -17,7 +17,7 @@
 // CONFIGURATION CONSTANTS
 // ============================================================================
 
-#define SERVER_PORT 5000
+#define SERVER_PORT 8080
 #define MAX_USERNAME 32
 #define MAX_MESSAGE 256
 #define MAX_CLIENTS 50
