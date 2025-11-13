@@ -1,0 +1,551 @@
+# Project 1: Live Chat Room - Requirements Specification
+
+## Project Information
+- **Course:** Ramapo:CS
+- **Project Name:** Live Chat Room
+- **Total Points:** 100
+- **Team Size:** Maximum 2 students per group
+- **Language:** C
+- **Programming Paradigm:** Socket Programming with Multi-threading
+
+---
+
+## Functional Requirements
+
+### FR1: Server Implementation (50 points)
+
+#### FR1.1: Socket Management
+- **MUST** create a TCP server socket
+- **MUST** bind to a configurable port (default: 5000)
+- **MUST** listen for incoming client connections
+- **MUST** accept multiple client connections
+
+#### FR1.2: Multi-threading
+- **MUST** create a new thread for each connected client
+- **MUST** use POSIX threads (pthread)
+- **MUST** manage concurrent client threads
+- **MUST** implement thread-safe data structures
+- **MUST** properly detach or join threads on cleanup
+
+#### FR1.3: Message Queue
+- **MUST** implement a thread-safe message queue
+- **MUST** use mutex locks for synchronization
+- **MUST** handle messages from all clients
+- **MUST** prevent race conditions and data corruption
+
+#### FR1.4: Authentication System
+- **MUST** receive authentication request from clients
+- **MUST** validate and store unique usernames
+- **MUST** send authentication confirmation/rejection
+- **MUST** maintain list of authenticated users
+
+#### FR1.5: Message Broadcasting
+- **MUST** broadcast messages to all connected clients in real-time
+- **MUST** implement a dedicated broadcast thread
+- **MUST** maintain list of active client connections
+- **MUST** handle message delivery to multiple clients
+
+#### FR1.6: Client Management
+- **MUST** track all connected clients (socket + username)
+- **MUST** detect client disconnections
+- **MUST** remove disconnected clients from active list
+- **MUST** notify system of client joins/leaves (optional)
+
+#### FR1.7: Error Handling
+- **MUST** handle socket creation failures
+- **MUST** handle bind/listen errors
+- **MUST** handle thread creation failures
+- **MUST** handle client disconnection gracefully
+- **MUST** prevent server crashes on errors
+
+#### FR1.8: Resource Management
+- **MUST** close all sockets on shutdown
+- **MUST** free all dynamically allocated memory
+- **MUST** terminate all threads cleanly
+- **MUST** destroy mutexes and synchronization primitives
+
+---
+
+### FR2: Client Implementation (30 points)
+
+#### FR2.1: Server Connection
+- **MUST** create a TCP client socket
+- **MUST** connect to server using host and port
+- **MUST** handle connection failures gracefully
+- **MUST** display connection status
+
+#### FR2.2: User Interface
+- **MUST** implement a simple text-based interface
+- **MUST** prompt user for username at startup
+- **MUST** display clear input prompts
+- **MUST** show received messages clearly
+- **MUST** format messages with sender identification
+
+#### FR2.3: Authentication
+- **MUST** send username to server for authentication
+- **MUST** wait for server authentication response
+- **MUST** handle authentication success/failure
+- **MUST** enforce unique username requirement
+
+#### FR2.4: Message Sending
+- **MUST** accept user input for messages
+- **MUST** format messages according to protocol
+- **MUST** send messages to server
+- **MUST** handle empty message input
+
+#### FR2.5: Message Receiving
+- **MUST** receive messages from server in real-time
+- **MUST** display messages immediately upon receipt
+- **MUST** parse messages according to protocol
+- **MUST** handle different message types
+
+#### FR2.6: Non-blocking I/O
+- **MUST** implement separate threads for sending and receiving
+- **MUST** allow simultaneous message send and receive
+- **MUST** prevent UI blocking during operations
+- **MUST** use pthread for thread management
+
+#### FR2.7: Graceful Shutdown
+- **MUST** handle EOF (Ctrl+D) for exit
+- **MUST** handle interrupt signals (Ctrl+C)
+- **MUST** close socket on exit
+- **MUST** terminate threads cleanly
+- **MUST** display disconnect message
+
+---
+
+### FR3: Communication Protocol (Required for both)
+
+#### FR3.1: Protocol Definition
+- **MUST** define a clear, documented protocol
+- **MUST** specify message format and structure
+- **MUST** define authentication message format
+- **MUST** define chat message format
+- **MUST** specify message delimiters
+- **MUST** define maximum message lengths
+
+#### FR3.2: Message Types
+- **MUST** support authentication messages
+- **MUST** support chat messages
+- **SHOULD** support notification messages
+- **SHOULD** support error messages
+
+#### FR3.3: Protocol Consistency
+- **MUST** follow protocol on both server and client
+- **MUST** parse messages according to protocol specification
+- **MUST** format messages according to protocol specification
+- **MUST** handle protocol violations gracefully
+
+---
+
+### FR4: Real-time Communication (Required for both)
+
+#### FR4.1: Message Delivery
+- **MUST** deliver messages in real-time
+- **MUST** broadcast to all participants
+- **MUST** maintain message order (per client)
+- **SHOULD** handle network latency gracefully
+
+#### FR4.2: Reliability
+- **MUST** detect broken connections
+- **MUST** handle partial message transmission
+- **MUST** prevent message loss during normal operation
+
+---
+
+## Non-Functional Requirements
+
+### NFR1: Code Quality (10 points)
+
+#### NFR1.1: Coding Style
+- **MUST** use consistent indentation (4 spaces or 1 tab)
+- **MUST** use meaningful variable names
+- **MUST** use meaningful function names
+- **MUST** follow C naming conventions
+- **SHOULD** limit function length to reasonable size
+
+#### NFR1.2: Comments and Documentation
+- **MUST** include file header comments
+- **MUST** include function header comments
+- **MUST** comment complex logic
+- **MUST** explain threading logic
+- **MUST** document data structures
+
+#### NFR1.3: Code Organization
+- **MUST** use proper file structure
+- **SHOULD** separate concerns into functions
+- **SHOULD** avoid code duplication
+- **MUST** use header files appropriately
+
+---
+
+### NFR2: Documentation (10 points)
+
+#### NFR2.1: Format Requirements
+- **MUST** be at least 1 page
+- **MUST** use 1.5 line spacing
+- **MUST** use font size 11
+- **MUST** be submitted as PDF or DOCX
+
+#### NFR2.2: Content Requirements
+- **MUST** include problem-solving approach discussion
+- **MUST** include user guide with compilation instructions
+- **MUST** include user guide with execution instructions
+- **MUST** include detailed code analysis
+- **MUST** include screenshots of working system
+- **MUST** show multiple clients interacting
+
+#### NFR2.3: User Guide Specifics
+- **MUST** explain how to compile server
+- **MUST** explain how to compile client
+- **MUST** explain how to run server
+- **MUST** explain how to connect clients
+- **MUST** provide example usage session
+
+---
+
+### NFR3: Performance
+
+#### NFR3.1: Server Performance
+- **MUST** handle at least 10 concurrent clients
+- **SHOULD** handle up to 50 concurrent clients
+- **MUST** respond to messages within 1 second
+- **MUST NOT** crash under normal load
+
+#### NFR3.2: Client Performance
+- **MUST** display messages within 1 second of receipt
+- **MUST** respond to user input immediately
+- **MUST NOT** freeze or hang during operation
+
+---
+
+### NFR4: Reliability
+
+#### NFR4.1: Error Handling
+- **MUST** handle all system call errors
+- **MUST** handle network errors gracefully
+- **MUST** recover from client disconnections
+- **MUST NOT** crash on invalid input
+- **MUST NOT** crash on malformed messages
+
+#### NFR4.2: Memory Management
+- **MUST** prevent memory leaks
+- **MUST** prevent buffer overflows
+- **MUST** validate all input lengths
+- **SHOULD** be verified with valgrind
+
+#### NFR4.3: Thread Safety
+- **MUST** prevent race conditions
+- **MUST** prevent deadlocks
+- **MUST** properly synchronize shared data
+- **MUST** use mutexes for all shared resources
+
+---
+
+### NFR5: Security
+
+#### NFR5.1: Input Validation
+- **MUST** validate username length
+- **MUST** validate message length
+- **MUST** sanitize user input
+- **SHOULD** prevent injection attacks
+
+#### NFR5.2: Resource Limits
+- **MUST** enforce maximum username length
+- **MUST** enforce maximum message length
+- **SHOULD** limit number of connections
+- **SHOULD** implement timeout mechanisms
+
+---
+
+## Optional Features (Extra Credit)
+
+### OF1: Private Messaging
+- **MAY** implement direct messaging between users
+- **MAY** use special command syntax (e.g., @username)
+- **MAY** show private message indicator in UI
+
+### OF2: Chat Room Commands
+- **MAY** implement /kick command
+- **MAY** implement /ban command
+- **MAY** implement /list command (show users)
+- **MAY** implement /help command
+
+### OF3: Message Logging
+- **MAY** log all messages to file
+- **MAY** timestamp log entries
+- **MAY** implement log rotation
+- **MAY** allow log retrieval
+
+### OF4: Enhanced Features
+- **MAY** implement message history on join
+- **MAY** implement typing indicators
+- **MAY** implement away/busy status
+- **MAY** implement message timestamps
+- **MAY** support emojis/special characters
+- **MAY** implement file transfer
+- **MAY** implement encryption (SSL/TLS)
+
+---
+
+## Technical Requirements
+
+### TR1: Development Environment
+
+#### TR1.1: Programming Language
+- **MUST** use C (not C++)
+- **MUST** compile with GCC
+- **SHOULD** support C11 standard
+
+#### TR1.2: Libraries
+- **MUST** use POSIX sockets
+- **MUST** use POSIX threads (pthread)
+- **MAY** use standard C library only
+- **MUST NOT** use external networking libraries
+
+#### TR1.3: Platform
+- **MUST** run on Linux
+- **SHOULD** run on Ubuntu 20.04 or later
+- **MAY** support other UNIX-like systems
+
+---
+
+### TR2: Compilation
+
+#### TR2.1: Compilation Requirements
+- **MUST** compile with: `gcc -Wall -Wextra -pthread`
+- **MUST** compile without errors
+- **SHOULD** compile without warnings
+- **MAY** include Makefile
+
+#### TR2.2: Dependencies
+- **MUST** require only standard C libraries
+- **MUST** require only system libraries
+- **MUST NOT** require external packages
+
+---
+
+### TR3: File Naming
+
+#### TR3.1: Required Files
+- **MUST** submit: `p1gxS.c` (server source)
+- **MUST** submit: `p1gxC.c` (client source)
+- **MUST** submit: `protocol.h` (protocol header)
+- **MUST** submit: `p1gxDoc.pdf` or `p1gxDoc.docx` (documentation)
+- **MAY** submit: additional header files
+- **MAY** submit: `Makefile`
+
+Note: Replace 'x' with your group number on Canvas
+
+---
+
+## Submission Requirements
+
+### SR1: Content
+- **MUST** include all source code files
+- **MUST** include protocol header file
+- **MUST** include documentation
+- **MUST** include all necessary header files
+
+### SR2: Submission Method
+- **MUST** submit to Canvas
+- **MUST** submit before class
+- **MUST** be ready for in-class presentation
+- **MUST** be ready for in-class grading
+
+### SR3: Academic Integrity
+- **MUST** be original work
+- **MUST NOT** contain plagiarized code
+- **MUST NOT** share code with other groups
+- **MAY** use code from course materials
+- **MAY** use standard library examples
+
+---
+
+## Testing Requirements
+
+### TEST1: Unit Testing
+
+#### TEST1.1: Server Testing
+- **MUST** test with mock client
+- **MUST** test single client connection
+- **MUST** test multiple client connections
+- **MUST** test client disconnection handling
+- **MUST** test message broadcasting
+- **MUST** test authentication
+
+#### TEST1.2: Client Testing
+- **MUST** test with mock server
+- **MUST** test connection establishment
+- **MUST** test authentication
+- **MUST** test message sending
+- **MUST** test message receiving
+- **MUST** test graceful shutdown
+
+---
+
+### TEST2: Integration Testing
+
+#### TEST2.1: System Testing
+- **MUST** test full server-client interaction
+- **MUST** test with multiple concurrent clients
+- **MUST** test real-time message delivery
+- **MUST** test under various network conditions
+- **MUST** test error scenarios
+
+#### TEST2.2: Edge Cases
+- **SHOULD** test maximum message length
+- **SHOULD** test empty messages
+- **SHOULD** test special characters
+- **SHOULD** test rapid message sending
+- **SHOULD** test connection timeout
+
+---
+
+### TEST3: Quality Assurance
+
+#### TEST3.1: Memory Testing
+- **MUST** run valgrind for memory leak detection
+- **MUST** fix all memory leaks
+- **MUST** fix all invalid memory accesses
+
+#### TEST3.2: Thread Testing
+- **MUST** verify thread safety
+- **MUST** test for race conditions
+- **MUST** test for deadlocks
+- **SHOULD** use thread sanitizer
+
+---
+
+## Evaluation Criteria
+
+### Points Breakdown:
+| Component | Points | Requirements |
+|-----------|--------|--------------|
+| Server Program | 50 | FR1.1-FR1.8 |
+| Client Program | 30 | FR2.1-FR2.7 |
+| Code Style | 10 | NFR1.1-NFR1.3 |
+| Documentation | 10 | NFR2.1-NFR2.3 |
+| **TOTAL** | **100** | |
+
+### Grading Rubric:
+
+#### Server (50 points):
+- Socket setup and listening: 5 points
+- Multi-threading implementation: 10 points
+- Message queue (thread-safe): 10 points
+- Authentication system: 5 points
+- Message broadcasting: 10 points
+- Client management: 5 points
+- Error handling: 5 points
+
+#### Client (30 points):
+- Server connection: 5 points
+- User interface: 5 points
+- Authentication: 5 points
+- Message sending: 5 points
+- Message receiving: 5 points
+- Non-blocking I/O: 5 points
+
+#### Code Style (10 points):
+- Consistent formatting: 3 points
+- Meaningful names: 2 points
+- Comments: 3 points
+- Code organization: 2 points
+
+#### Documentation (10 points):
+- Problem-solving approach: 3 points
+- User guide: 3 points
+- Code analysis: 3 points
+- Screenshots: 1 point
+
+---
+
+## Definition of Done
+
+A feature is considered "done" when:
+- [ ] Code is written and committed
+- [ ] Code compiles without errors or warnings
+- [ ] Code is commented appropriately
+- [ ] Unit tests pass (with mock components)
+- [ ] Integration tests pass (if applicable)
+- [ ] No memory leaks detected
+- [ ] Peer reviewed (by partner)
+- [ ] Documentation updated
+
+---
+
+## Glossary
+
+**Terms:**
+- **Server:** The central program that accepts client connections and facilitates communication
+- **Client:** The program that connects to the server and allows user interaction
+- **Protocol:** The agreed-upon format for messages between server and client
+- **Thread-safe:** Code that works correctly when accessed by multiple threads simultaneously
+- **Race condition:** A bug that occurs when thread timing affects program correctness
+- **Mutex:** A synchronization primitive that ensures only one thread accesses data at a time
+- **Broadcasting:** Sending a message to all connected clients
+- **Mock:** A simplified test implementation used for independent testing
+
+---
+
+## References
+
+**Required Reading:**
+- POSIX socket API documentation
+- POSIX threads (pthread) documentation
+- Project specification document
+- Implementation plan document
+
+**Recommended Resources:**
+- Beej's Guide to Network Programming
+- POSIX Threads Programming (LLNL)
+- Advanced Programming in the UNIX Environment
+- The C Programming Language (K&R)
+
+---
+
+## Revision History
+
+| Version | Date | Changes | Author |
+|---------|------|---------|--------|
+| 1.0 | 2025-01-XX | Initial requirements | Both Developers |
+
+---
+
+## Acceptance Criteria Summary
+
+**The project is acceptable if and only if:**
+1. ✅ Server runs and accepts multiple client connections
+2. ✅ Client connects and authenticates successfully
+3. ✅ Messages are broadcast to all connected clients in real-time
+4. ✅ Code compiles without errors
+5. ✅ No memory leaks detected by valgrind
+6. ✅ Documentation is complete and well-formatted
+7. ✅ Code is well-commented and follows style guidelines
+8. ✅ All required files are submitted with correct naming
+9. ✅ System demonstrates correct functionality in presentation
+10. ✅ No plagiarism detected
+
+---
+
+## Priority Levels
+
+**MUST:** Critical requirement - project will fail without this
+**SHOULD:** Important requirement - project may pass but will lose points
+**MAY:** Optional requirement - adds value but not required
+
+---
+
+## Contact Information
+
+**For Questions:**
+- Consult project specification document first
+- Review implementation plan
+- Ask during office hours
+- Post on course discussion board
+- Email instructor (last resort)
+
+---
+
+**End of Requirements Document**
