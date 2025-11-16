@@ -1,14 +1,5 @@
-/*
- * Live Chat Room - Client Implementation
- * File: p1gxC.c
- *
- * Multi-threaded TCP client for real-time chat communication.
- * Features:
- * - Username-based authentication
- * - Simultaneous send and receive (multi-threaded I/O)
- * - Real-time message display
- * - Graceful shutdown handling
- */
+// Live Chat Room - Multi-threaded TCP Client
+// Real-time chat with authentication and dual I/O threads
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -22,10 +13,7 @@
 #include <signal.h>
 #include "protocol.h"
 
-// ============================================================================
-// ANSI COLOR CODES (for enhanced UI)
-// ============================================================================
-
+// ANSI color codes
 #define COLOR_RESET   "\033[0m"
 #define COLOR_GREEN   "\033[32m"
 #define COLOR_YELLOW  "\033[33m"
@@ -34,26 +22,16 @@
 #define COLOR_CYAN    "\033[36m"
 #define COLOR_MAGENTA "\033[35m"
 
-// ============================================================================
-// GLOBAL VARIABLES
-// ============================================================================
-
+// Global state
 int global_sock = 0;
 volatile int keep_running = 1;
 char my_username[MAX_USERNAME];
 
-// ============================================================================
-// FUNCTION DECLARATIONS
-// ============================================================================
-
+// Signal handler
 void signal_handler(int sig);
 void display_welcome_banner(const char *username);
 void send_disconnect_message(const char *username);
 void *receive_thread(void *arg);
-
-// ============================================================================
-// SIGNAL HANDLER
-// ============================================================================
 
 void signal_handler(int sig) {
     if (sig == SIGINT) {
@@ -63,13 +41,7 @@ void signal_handler(int sig) {
     }
 }
 
-// ============================================================================
-// UI FUNCTIONS
-// ============================================================================
-
-/**
- * Display welcome banner after successful authentication
- */
+// Display welcome banner after authentication
 void display_welcome_banner(const char *username) {
     printf("\n");
     printf("%s╔════════════════════════════════════════╗%s\n", COLOR_CYAN, COLOR_RESET);
@@ -90,13 +62,7 @@ void display_welcome_banner(const char *username) {
     printf("\n");
 }
 
-// ============================================================================
-// NETWORK FUNCTIONS
-// ============================================================================
-
-/**
- * Send disconnect message to server (optional)
- */
+// Send disconnect message to server
 void send_disconnect_message(const char *username) {
     if (global_sock > 0) {
         char disconnect_msg[BUFFER_SIZE];
@@ -105,14 +71,7 @@ void send_disconnect_message(const char *username) {
     }
 }
 
-// ============================================================================
-// RECEIVE THREAD
-// ============================================================================
-
-/**
- * Thread for receiving messages from server
- * Runs concurrently with main thread for non-blocking I/O
- */
+// Receive thread - listens for incoming messages from server
 void *receive_thread(void *arg) {
     (void)arg;  // Unused parameter
 
@@ -171,32 +130,22 @@ void *receive_thread(void *arg) {
     return NULL;
 }
 
-// ============================================================================
-// MAIN FUNCTION
-// ============================================================================
-
+// Main client function
 int main() {
     int sock = 0;
     struct sockaddr_in serv_addr;
     char username[MAX_USERNAME] = {0};
 
-    // Register signal handler for Ctrl+C
     signal(SIGINT, signal_handler);
 
-    // ========================================
-    // DISPLAY HEADER
-    // ========================================
-
+    // Display header
     printf("\n");
     printf("%s╔════════════════════════════════════════╗%s\n", COLOR_BLUE, COLOR_RESET);
     printf("%s║       Live Chat Room - Client         ║%s\n", COLOR_BLUE, COLOR_RESET);
     printf("%s╚════════════════════════════════════════╝%s\n", COLOR_BLUE, COLOR_RESET);
     printf("\n");
 
-    // ========================================
-    // GET USERNAME FROM USER
-    // ========================================
-
+    // Get username from user
     printf("Enter your username: ");
     fflush(stdout);
 
@@ -225,19 +174,13 @@ int main() {
 
     printf("%sUsername: %s%s\n", COLOR_GREEN, username, COLOR_RESET);
 
-    // ========================================
-    // CREATE SOCKET
-    // ========================================
-
+    // Create socket
     if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
         perror("Socket creation error");
         return -1;
     }
 
-    // ========================================
-    // SET UP SERVER ADDRESS
-    // ========================================
-
+    // Set up server address
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_port = htons(SERVER_PORT);
 
@@ -249,10 +192,7 @@ int main() {
         return -1;
     }
 
-    // ========================================
-    // CONNECT TO SERVER
-    // ========================================
-
+    // Connect to server
     printf("%sConnecting to server at 127.0.0.1:%d...%s\n",
            COLOR_YELLOW, SERVER_PORT, COLOR_RESET);
 
@@ -265,11 +205,7 @@ int main() {
 
     printf("%s✓ Connected to server%s\n", COLOR_GREEN, COLOR_RESET);
 
-    // ========================================
-    // AUTHENTICATE
-    // ========================================
-
-    // Send authentication request
+    // Authenticate with server
     char auth_msg[BUFFER_SIZE];
     format_auth_message(auth_msg, username);
 
@@ -292,10 +228,10 @@ int main() {
     }
     auth_response[valread] = '\0';
 
-    // Remove trailing newline
-    len = strlen(auth_response);
-    if (len > 0 && auth_response[len - 1] == '\n') {
-        auth_response[len - 1] = '\0';
+    // Extract first line only (in case multiple messages arrive together)
+    char *newline = strchr(auth_response, '\n');
+    if (newline != NULL) {
+        *newline = '\0';
     }
 
     // Check authentication result
@@ -309,11 +245,8 @@ int main() {
         return -1;
     }
 
-    // ========================================
-    // START RECEIVE THREAD
-    // ========================================
-
-    global_sock = sock;  // Set global socket for thread access
+    // Start receive thread
+    global_sock = sock;
 
     pthread_t recv_tid;
     if (pthread_create(&recv_tid, NULL, receive_thread, NULL) != 0) {
@@ -322,10 +255,7 @@ int main() {
         return -1;
     }
 
-    // ========================================
-    // MESSAGE SENDING LOOP (Main Thread)
-    // ========================================
-
+    // Main loop - send messages from user input
     char input[MAX_MESSAGE];
     char formatted_msg[BUFFER_SIZE];
 
@@ -379,10 +309,7 @@ int main() {
         }
     }
 
-    // ========================================
-    // CLEANUP
-    // ========================================
-
+    // Cleanup and disconnect
     keep_running = 0;
 
     // Send disconnect notification (optional)

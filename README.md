@@ -1,105 +1,68 @@
-# Live Chat Room - Project Documentation
+# Live Chat Room
 
-## Project Overview
+A multi-threaded TCP chat system in C using POSIX sockets and pthreads.
 
-A fully-featured, multi-threaded live chat room system implemented in C using POSIX sockets and pthreads. This project demonstrates concurrent programming, network communication, and real-time messaging.
-
-### Features Implemented ✅
+## Features
 
 **Server (p1gxS.c):**
 - Multi-threaded architecture (one thread per client + broadcast thread)
-- Username-based authentication
+- Username-based authentication with uniqueness checking
 - Real-time message broadcasting to all connected clients
-- Thread-safe message queue with mutex synchronization
+- Thread-safe message queue (circular buffer)
 - Graceful shutdown handling (Ctrl+C)
 - Support for up to 50 concurrent clients
-- Client connection/disconnection notifications
+- Client join/leave notifications
 
 **Client (p1gxC.c):**
-- Multi-threaded I/O (simultaneous send and receive)
+- Multi-threaded I/O (separate send and receive threads)
 - Username validation and authentication
-- Real-time message display
-- Colorized terminal output for better UX
-- Graceful disconnect handling
-- Support for multiple quit methods (quit command, Ctrl+D, Ctrl+C)
+- Real-time message display with colorized output
+- Support for quit command, Ctrl+D, and Ctrl+C exit methods
+- Disconnect notifications to server
 
 **Protocol (protocol.h):**
 - Text-based protocol with newline delimiters
 - Message types: AUTH, MSG, NOTIFY, ERROR, DISCONNECT
-- Helper functions for formatting and parsing
-- Input validation (username, message content)
-- Thread-safe message queue implementation
-
----
+- Helper functions for message formatting and parsing
+- Input validation for usernames and messages
+- Thread-safe circular message queue
 
 ## Project Structure
 
 ```
 live-chat-room/
-├── protocol.h              # Communication protocol definition
-├── p1gxS.c                 # Server implementation
-├── p1gxC.c                 # Client implementation
-├── server.c                # Basic server (foundation)
-├── client.c                # Basic client (foundation)
-├── Makefile                # Build automation
-├── requirement.txt         # Project requirements specification
-├── implementation.md       # Implementation plan and overview
-├── server-implementation.md # Step-by-step server guide
-├── client-implementation.md # Step-by-step client guide
-├── test_chat.sh            # Testing script
-└── README.md               # This file
+├── protocol.h           # Communication protocol and shared structures
+├── p1gxS.c              # Server implementation
+├── p1gxC.c              # Client implementation
+└── README.md            # This file
 ```
-
----
 
 ## Compilation
-
-### Using Makefile (Recommended)
-
-```bash
-# Build both server and client
-make all
-
-# Build server only
-make server
-
-# Build client only
-make client
-
-# Clean build artifacts
-make clean
-
-# Test compilation with strict warnings
-make test
-```
 
 ### Manual Compilation
 
 ```bash
 # Compile server
-gcc -Wall -Wextra -pthread -std=c11 -o server p1gxS.c
+gcc -pthread -o server p1gxS.c
 
 # Compile client
-gcc -Wall -Wextra -pthread -std=c11 -o client p1gxC.c
+gcc -pthread -o client p1gxC.c
 ```
 
-**Compilation Requirements:**
+**Requirements:**
 - GCC compiler
-- POSIX threads support (-pthread)
-- C11 standard or later
+- POSIX threads support
+- C11 standard
 
----
+## Running
 
-## Running the Chat Room
+### Start Server (Terminal 1)
 
-### Method 1: Manual Testing
-
-#### Terminal 1 - Start Server
 ```bash
 ./server
 ```
 
-Expected output:
+Output:
 ```
 ╔════════════════════════════════════════╗
 ║     Live Chat Room - Server           ║
@@ -107,110 +70,108 @@ Expected output:
 
 [Server] Message queue initialized
 [Server] Broadcast thread started
-[Server] Listening on port 5000
+[Server] Listening on port 8080
 [Server] Maximum clients: 50
 [Server] Press Ctrl+C to shutdown
-========================================
 ```
 
-#### Terminal 2 - Start Client 1
+### Start Clients (Terminal 2+)
+
 ```bash
 ./client
 ```
 
+Enter username:
 ```
 Enter your username: alice
+✓ Connected to server
 ✓ Authentication successful!
 ```
 
-#### Terminal 3 - Start Client 2
-```bash
-./client
-```
+### Chat
 
 ```
-Enter your username: bob
-✓ Authentication successful!
-[*] alice joined the chat
-```
-
-#### Now Chat!
-```
-alice> Hello everyone!
+> Hello everyone!
 [You] Hello everyone!
-
-bob> Hi alice!
-[alice]: Hi alice!
+[bob] Hi alice!
+> quit
+Disconnected from server
 ```
-
-### Method 2: Using Test Script
-
-```bash
-./test_chat.sh
-```
-
----
-
-## Testing Checklist
-
-### Basic Functionality
-- ✅ Server starts without errors
-- ✅ Multiple clients can connect
-- ✅ Authentication works
-- ✅ Messages broadcast to all clients
-- ✅ Join/leave notifications work
-- ✅ Graceful disconnect handling
-- ✅ Server shutdown clean
-
-### Memory & Thread Safety
-- ✅ No memory leaks
-- ✅ Thread-safe operations
-- ✅ Proper mutex usage
-- ✅ Clean resource cleanup
-
----
 
 ## Protocol Specification
 
-All messages use text-based format with newline delimiters.
+All messages are text-based with newline delimiters.
 
-### Message Types
+### Message Formats
 
-1. **AUTH** - `AUTH:username\n`
-2. **MSG** - `MSG:sender:content\n`
-3. **NOTIFY** - `NOTIFY:message\n`
-4. **ERROR** - `ERROR:description\n`
-5. **DISCONNECT** - `DISCONNECT:username\n`
+- **AUTH** → `AUTH:username\n`
+- **AUTH_OK** → `AUTH_OK\n`
+- **AUTH_FAILED** → `AUTH_FAILED:reason\n`
+- **MSG** → `MSG:username:content\n`
+- **NOTIFY** → `NOTIFY:text\n`
+- **ERROR** → `ERROR:description\n`
+- **DISCONNECT** → `DISCONNECT:username\n`
 
-### Constraints
+### Configuration
 
-- Max username: 32 characters
-- Max message: 256 characters
-- Max clients: 50
-- Server port: 5000
+- **SERVER_PORT:** 8080
+- **MAX_USERNAME:** 32 characters
+- **MAX_MESSAGE:** 256 characters
+- **MAX_CLIENTS:** 50 concurrent
+- **QUEUE_SIZE:** 100 messages
 
----
+## Testing
 
-## Common Issues & Solutions
+### Basic Test
+
+```bash
+# Terminal 1: Start server
+./server
+
+# Terminal 2: Start first client
+./client
+# Enter: alice
+
+# Terminal 3: Start second client
+./client
+# Enter: bob
+
+# Both clients should receive notifications and be able to chat
+```
+
+### Stress Test
+
+Connect 5+ clients and send messages rapidly to verify:
+- No message loss
+- No crashes or segfaults
+- All clients receive all messages
+
+## Common Issues
 
 ### "Address already in use"
+
 ```bash
+# Kill existing server
 killall server
-# Wait 1 second, then restart
+
+# Wait a moment, then restart
 ./server
 ```
 
-### "Connection Failed"
-- Ensure server is running first
-- Check server is on port 5000
+If that doesn't work, wait 60 seconds before restarting (TCP TIME_WAIT).
 
----
+### "Connection Failed"
+
+- Ensure server is running
+- Verify port 8080 is not blocked
+- Check with: `lsof -i :8080`
 
 ## Quick Reference
 
 ```bash
-# Build
-make all
+# Compile
+gcc -Wall -Wextra -pthread -std=c11 -o server p1gxS.c
+gcc -Wall -Wextra -pthread -std=c11 -o client p1gxC.c
 
 # Run server
 ./server
@@ -218,12 +179,42 @@ make all
 # Run client
 ./client
 
-# Clean
-make clean
-
 # Kill server
 killall server
 ```
+
+## Architecture
+
+### Threading Model
+
+**Server:**
+```
+Main Thread (accept loop)
+    ├─ Client Thread 1 (handle alice)
+    ├─ Client Thread 2 (handle bob)
+    └─ Broadcast Thread (distribute messages)
+```
+
+**Client:**
+```
+Main Thread (user input)
+    └─ Receive Thread (listen for messages)
+```
+
+### Message Flow
+
+1. Client sends: `MSG:alice:Hello!\n`
+2. Server receives in client handler thread
+3. Server enqueues message
+4. Broadcast thread dequeues and sends to all
+5. All clients receive: `MSG:alice:Hello!\n`
+
+## Thread Safety
+
+- Client list protected by `clients_mutex`
+- Message queue protected by `queue_mutex` + `queue_cond`
+- Condition variable for efficient thread synchronization
+- No busy-waiting or race conditions
 
 ---
 

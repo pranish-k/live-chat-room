@@ -1,14 +1,5 @@
-/*
- * Live Chat Room - Server Implementation
- * File: p1gxS.c
- *
- * Multi-threaded TCP server that handles multiple clients concurrently.
- * Features:
- * - Username-based authentication
- * - Real-time message broadcasting to all connected clients
- * - Thread-safe message queue
- * - Graceful shutdown handling
- */
+// Live Chat Room - Multi-threaded TCP Server
+// Handles client authentication, message queueing, and real-time broadcasting
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -22,27 +13,23 @@
 #include <signal.h>
 #include "protocol.h"
 
-// ============================================================================
-// GLOBAL VARIABLES
-// ============================================================================
-
-// Client tracking
+// Global state - client tracking
 client_info_t clients[MAX_CLIENTS];
 int client_count = 0;
 pthread_mutex_t clients_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-// Message queue for broadcasting
+// Global state - message queue
 message_queue_t msg_queue;
 pthread_mutex_t queue_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t queue_cond = PTHREAD_COND_INITIALIZER;
 
-// Server control
+// Server control flag
 volatile int server_running = 1;
 
-// ============================================================================
-// FUNCTION DECLARATIONS
-// ============================================================================
+// Server socket (global to allow signal handler to close it)
+int server_fd = -1;
 
+// Signal handler
 void signal_handler(int sig);
 int add_client(int socket_fd, const char *username);
 void remove_client(int socket_fd);
@@ -51,25 +38,20 @@ void *handle_client(void *arg);
 void *broadcast_thread(void *arg);
 void broadcast_notification(const char *notification);
 
-// ============================================================================
-// SIGNAL HANDLER
-// ============================================================================
-
 void signal_handler(int sig) {
     if (sig == SIGINT) {
         printf("\n[Server] Received shutdown signal...\n");
         server_running = 0;
+
+        // Close server socket to unblock accept()
+        if (server_fd != -1) {
+            close(server_fd);
+            server_fd = -1;
+        }
     }
 }
 
-// ============================================================================
-// CLIENT MANAGEMENT FUNCTIONS
-// ============================================================================
-
-/**
- * Add a new client to the tracking list
- * Thread-safe operation using mutex
- */
+// Add a new client to the tracking list (thread-safe)
 int add_client(int socket_fd, const char *username) {
     pthread_mutex_lock(&clients_mutex);
 
@@ -90,10 +72,7 @@ int add_client(int socket_fd, const char *username) {
     return 0;
 }
 
-/**
- * Remove a client from the tracking list
- * Thread-safe operation using mutex
- */
+// Remove a client from the tracking list (thread-safe)
 void remove_client(int socket_fd) {
     pthread_mutex_lock(&clients_mutex);
 
@@ -113,10 +92,7 @@ void remove_client(int socket_fd) {
     pthread_mutex_unlock(&clients_mutex);
 }
 
-/**
- * Check if a username already exists
- * Thread-safe operation using mutex
- */
+// Check if username already exists (thread-safe)
 int username_exists(const char *username) {
     pthread_mutex_lock(&clients_mutex);
 
@@ -131,9 +107,7 @@ int username_exists(const char *username) {
     return 0;  // Username available
 }
 
-/**
- * Broadcast a notification to all connected clients
- */
+// Broadcast notification to all connected clients
 void broadcast_notification(const char *notification) {
     char notify_msg[BUFFER_SIZE];
     format_notification(notify_msg, notification);
@@ -147,14 +121,7 @@ void broadcast_notification(const char *notification) {
     printf("[Server] Notification broadcasted: %s\n", notification);
 }
 
-// ============================================================================
-// BROADCAST THREAD
-// ============================================================================
-
-/**
- * Dedicated thread for broadcasting messages to all clients
- * Reads from message queue and sends to all connected clients
- */
+// Dedicated broadcast thread - dequeues and distributes messages
 void *broadcast_thread(void *arg) {
     (void)arg;  // Unused parameter
 
@@ -202,14 +169,7 @@ void *broadcast_thread(void *arg) {
     return NULL;
 }
 
-// ============================================================================
-// CLIENT HANDLER THREAD
-// ============================================================================
-
-/**
- * Handle individual client connection
- * Each client runs in its own thread
- */
+// Client handler thread - processes authentication and messages
 void *handle_client(void *arg) {
     int client_socket = *(int*)arg;
     free(arg);
@@ -220,10 +180,7 @@ void *handle_client(void *arg) {
     printf("[Thread %p] New client connected (socket %d)\n",
            (void*)pthread_self(), client_socket);
 
-    // ========================================
-    // AUTHENTICATION
-    // ========================================
-
+    // Phase 1: Authentication
     // Read authentication message
     int valread = read(client_socket, buffer, BUFFER_SIZE - 1);
     if (valread <= 0) {
@@ -298,10 +255,7 @@ void *handle_client(void *arg) {
     snprintf(join_msg, BUFFER_SIZE, "%s joined the chat", username);
     broadcast_notification(join_msg);
 
-    // ========================================
-    // MESSAGE RECEIVING LOOP
-    // ========================================
-
+    // Phase 2: Message receiving loop
     while (server_running) {
         memset(buffer, 0, BUFFER_SIZE);
         valread = read(client_socket, buffer, BUFFER_SIZE - 1);
@@ -346,10 +300,7 @@ void *handle_client(void *arg) {
         }
     }
 
-    // ========================================
-    // CLEANUP
-    // ========================================
-
+    // Phase 3: Cleanup
     // Broadcast leave notification
     char leave_msg[BUFFER_SIZE];
     snprintf(leave_msg, BUFFER_SIZE, "%s left the chat", username);
@@ -363,12 +314,8 @@ void *handle_client(void *arg) {
     return NULL;
 }
 
-// ============================================================================
-// MAIN FUNCTION
-// ============================================================================
-
+// Main server function
 int main() {
-    int server_fd;
     struct sockaddr_in address;
 
     printf("╔════════════════════════════════════════╗\n");
@@ -378,7 +325,6 @@ int main() {
     // Register signal handler for graceful shutdown
     signal(SIGINT, signal_handler);
 
-    // Initialize message queue
     init_message_queue(&msg_queue);
     printf("[Server] Message queue initialized\n");
 
@@ -391,16 +337,13 @@ int main() {
     pthread_detach(broadcast_tid);
     printf("[Server] Broadcast thread started\n");
 
-    // ========================================
-    // CREATE SOCKET
-    // ========================================
-
-    if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
+    // Create socket
+    server_fd = socket(AF_INET, SOCK_STREAM, 0);
+    if (server_fd == 0) {
         perror("[Server] Socket creation failed");
         exit(EXIT_FAILURE);
     }
 
-    // Set socket options to reuse address
     int opt = 1;
     if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
         perror("[Server] Setsockopt failed");
@@ -408,10 +351,7 @@ int main() {
         exit(EXIT_FAILURE);
     }
 
-    // ========================================
-    // BIND SOCKET
-    // ========================================
-
+    // Bind socket
     address.sin_family = AF_INET;
     address.sin_addr.s_addr = INADDR_ANY;  // Listen on all interfaces
     address.sin_port = htons(SERVER_PORT);
@@ -422,10 +362,7 @@ int main() {
         exit(EXIT_FAILURE);
     }
 
-    // ========================================
-    // LISTEN FOR CONNECTIONS
-    // ========================================
-
+    // Listen for connections
     if (listen(server_fd, 5) < 0) {
         perror("[Server] Listen failed");
         close(server_fd);
@@ -434,13 +371,9 @@ int main() {
 
     printf("[Server] Listening on port %d\n", SERVER_PORT);
     printf("[Server] Maximum clients: %d\n", MAX_CLIENTS);
-    printf("[Server] Press Ctrl+C to shutdown\n");
-    printf("========================================\n\n");
+    printf("[Server] Press Ctrl+C to shutdown\n\n");
 
-    // ========================================
-    // MAIN ACCEPT LOOP
-    // ========================================
-
+    // Main accept loop
     while (server_running) {
         struct sockaddr_in client_addr;
         socklen_t client_len = sizeof(client_addr);
@@ -481,10 +414,7 @@ int main() {
         pthread_detach(thread_id);
     }
 
-    // ========================================
-    // CLEANUP
-    // ========================================
-
+    // Cleanup and shutdown
     printf("\n[Server] Shutting down...\n");
 
     // Close all client connections
