@@ -4,7 +4,7 @@ A multi-threaded TCP chat system in C using POSIX sockets and pthreads.
 
 ## Features
 
-**Server (p1gxS.c):**
+**Server (p1g2S.c):**
 - Multi-threaded architecture (one thread per client + broadcast thread)
 - Username-based authentication with uniqueness checking
 - Real-time message broadcasting to all connected clients
@@ -13,7 +13,7 @@ A multi-threaded TCP chat system in C using POSIX sockets and pthreads.
 - Support for up to 50 concurrent clients
 - Client join/leave notifications
 
-**Client (p1gxC.c):**
+**Client (p1g2C.c):**
 - Multi-threaded I/O (separate send and receive threads)
 - Username validation and authentication
 - Real-time message display with colorized output
@@ -32,8 +32,8 @@ A multi-threaded TCP chat system in C using POSIX sockets and pthreads.
 ```
 live-chat-room/
 ├── protocol.h           # Communication protocol and shared structures
-├── p1gxS.c              # Server implementation
-├── p1gxC.c              # Client implementation
+├── p1g2S.c              # Server implementation
+├── p1g2C.c              # Client implementation
 └── README.md            # This file
 ```
 
@@ -43,10 +43,10 @@ live-chat-room/
 
 ```bash
 # Compile server
-gcc -pthread -o server p1gxS.c
+gcc -pthread -o server p1g2S.c
 
 # Compile client
-gcc -pthread -o client p1gxC.c
+gcc -pthread -o client p1g2C.c
 ```
 
 **Requirements:**
@@ -170,8 +170,8 @@ If that doesn't work, wait 60 seconds before restarting (TCP TIME_WAIT).
 
 ```bash
 # Compile
-gcc -Wall -Wextra -pthread -std=c11 -o server p1gxS.c
-gcc -Wall -Wextra -pthread -std=c11 -o client p1gxC.c
+gcc -Wall -Wextra -pthread -std=c11 -o server p1g2S.c
+gcc -Wall -Wextra -pthread -std=c11 -o client p1g2C.c
 
 # Run server
 ./server
@@ -218,4 +218,4 @@ Main Thread (user input)
 
 ---
 
-**Status:** Complete and tested ✅
+**Status:** Complete and tested 
